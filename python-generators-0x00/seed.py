@@ -183,18 +183,15 @@ def insert_data(connection: mysql.connector.connection_cext.CMySQLConnection, da
         raise
 
 
-def stream_user_rows(connection: mysql.connector.connection_cext.CMySQLConnection, fetch_size: int = 500
-                     ) -> Iterator[Dict[str, Any]]:
+def stream_user_rows(connection, fetch_size: int = 500):
     """
     Generator that streams rows from user_data table in batches and yields one row at a time.
-    Usage:
-        for row in stream_user_rows(conn):
-            process(row)
     """
     query = "SELECT user_id, name, email, age FROM user_data"
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute(query)
+    cursor = None
     try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(query)
         while True:
             rows = cursor.fetchmany(size=fetch_size)
             if not rows:
@@ -202,7 +199,19 @@ def stream_user_rows(connection: mysql.connector.connection_cext.CMySQLConnectio
             for r in rows:
                 yield r
     finally:
-        cursor.close()
+        # defensive cleanup: close cursor and connection if they exist
+        try:
+            if cursor is not None and hasattr(cursor, "close"):
+                cursor.close()
+        except Exception:
+            # ignore cursor close errors (prevents ReferenceError tracebacks)
+            pass
+        try:
+            if connection is not None and hasattr(connection, "close"):
+                connection.close()
+        except Exception:
+            pass
+
 
 
 # If the module is run directly, provide a tiny demo when credentials are available
