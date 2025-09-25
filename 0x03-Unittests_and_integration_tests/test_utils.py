@@ -38,7 +38,7 @@ class TestAccessNestedMap(unittest.TestCase):
 
 
 class TestGetJson(unittest.TestCase):
-    """Tests for the get_json utility which performs HTTP GET and returns JSON."""
+    """Tests for the get_json utility function."""
 
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
@@ -46,7 +46,7 @@ class TestGetJson(unittest.TestCase):
     ])
     @patch("utils.requests.get")
     def test_get_json(self, test_url, test_payload, mock_get):
-        """Test get_json returns the payload and calls requests.get once."""
+        """Test get_json returns payload and calls requests.get once."""
         mock_response = Mock()
         mock_response.json.return_value = test_payload
         mock_get.return_value = mock_response
@@ -59,7 +59,7 @@ class TestGetJson(unittest.TestCase):
 
 
 class TestMemoize(unittest.TestCase):
-    """Test that the memoize decorator caches method results on instances."""
+    """Test that the memoize decorator caches method results."""
 
     def test_memoize(self):
         """Test that memoize caches the method result after first call."""
@@ -85,4 +85,3 @@ class TestMemoize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
