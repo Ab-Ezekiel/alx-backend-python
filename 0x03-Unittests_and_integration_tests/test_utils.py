@@ -3,10 +3,12 @@
 import unittest
 from parameterized import parameterized
 from utils import access_nested_map, memoize
-from unittest.mock import patch, Mock   # <-- add this import here
+from unittest.mock import patch, Mock
 
 
 class TestAccessNestedMap(unittest.TestCase):
+    """Tests for the access_nested_map utility function."""
+
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
         ({"a": {"b": 2}}, ("a",), {"b": 2}),
@@ -24,7 +26,10 @@ class TestAccessNestedMap(unittest.TestCase):
             access_nested_map(nested_map, path)
         self.assertEqual(str(cm.exception), repr(path[-1]))
 
+
 class TestGetJson(unittest.TestCase):
+    """Tests for the get_json utility which performs HTTP GET and returns JSON."""
+
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False}),
@@ -41,8 +46,9 @@ class TestGetJson(unittest.TestCase):
         self.assertEqual(result, test_payload)
         mock_get.assert_called_once_with(test_url)
 
+
 class TestMemoize(unittest.TestCase):
-    """Test class for memoize decorator"""
+    """Test that the memoize decorator caches method results on the instance."""
 
     def test_memoize(self):
         class TestClass:
@@ -65,3 +71,4 @@ class TestMemoize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
