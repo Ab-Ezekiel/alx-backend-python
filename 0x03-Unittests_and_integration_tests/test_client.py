@@ -3,6 +3,7 @@
 import os
 import sys
 import unittest
+import requests
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, PropertyMock, Mock
@@ -82,9 +83,10 @@ class TestGithubOrgClient(unittest.TestCase):
 
 # ================= Integration Tests =================
 
-@parameterized_class(('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), [
-    (org_payload, repos_payload, expected_repos, apache2_repos)
-])
+@parameterized_class(
+    ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), 
+    [(org_payload, repos_payload, expected_repos, apache2_repos)]
+)
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration tests for GithubOrgClient.public_repos."""
 
