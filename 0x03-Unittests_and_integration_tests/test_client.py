@@ -82,9 +82,7 @@ class TestGithubOrgClient(unittest.TestCase):
         Covers both matching and non-matching license case.
         """
         client = GithubOrgClient("test")
-        self.assertEqual(client.has_license(repo, license_key), 
-        expected)
-
+        self.assertEqual(client.has_license(repo, license_key),expected)
 
 # ============= Integration Tests =============
 @parameterized_class(
@@ -118,8 +116,8 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     def test_public_repos(self):
         """Integration test for public_repos returns expected repo names."""
         client = GithubOrgClient("test")
-        self.assertEqual(sorted(client.public_repos()), 
-        sorted(self.expected_repos))
+        self.assertEqual(sorted(client.public_repos()),
+                         sorted(self.expected_repos))
 
     def test_public_repos_with_license(self):
         """Integration test for public_repos filtering by license."""
@@ -128,7 +126,6 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             sorted(client.public_repos("apache-2.0")), 
             sorted(self.apache2_repos)
         )
-
 
 if __name__ == "__main__":
     unittest.main()
