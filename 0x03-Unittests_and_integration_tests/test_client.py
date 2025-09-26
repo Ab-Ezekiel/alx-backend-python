@@ -59,11 +59,6 @@ class TestGithubOrgClient(unittest.TestCase):
             mock_url.assert_called_once()
             mock_get_json.assert_called_once_with(mock_url.return_value)
 
-
-
-class TestPublicRepos(unittest.TestCase):
-    """Tests for GithubOrgClient repos methods."""
-
     def test_public_repos_url(self):
         """Test that _public_repos_url returns the mocked repos_url."""
         client = GithubOrgClient("test")
