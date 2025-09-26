@@ -23,7 +23,7 @@ class TestAccessNestedMap(unittest.TestCase):
         ),
     ])
     def test_access_nested_map(self, nested_map, path, expected):
-        """Test access_nested_map returns the expected value."""
+        """Test access_nested_map returns expected value."""
         self.assertEqual(access_nested_map(nested_map, path), expected)
 
     @parameterized.expand([
