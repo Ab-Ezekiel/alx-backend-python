@@ -44,7 +44,9 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @patch("client.get_json")
     def test_public_repos(self, mock_get_json):
-        """Test that public_repos returns repo names and calls get_json once."""
+        """Test that public_repos returns repo names and calls get_json.
+        Ensure get_json and _public_repos_url are called once.
+        """
         repos_payload = [
             {"name": "repo1", "license": {"key": "mit"}},
             {"name": "repo2", "license": {"key": "apache-2.0"}},
@@ -69,7 +71,9 @@ class TestGithubOrgClient(unittest.TestCase):
         ({"license": {"key": "other_license"}}, "my_license", False),
     ])
     def test_has_license(self, repo, license_key, expected):
-        """Test that has_license returns True/False depending on the license key."""
+        """Test that has_license returns True/False depending on license key.
+        Covers both matching and non-matching license case.
+        """
         client = GithubOrgClient("test")
         self.assertEqual(client.has_license(repo, license_key), expected)
 
