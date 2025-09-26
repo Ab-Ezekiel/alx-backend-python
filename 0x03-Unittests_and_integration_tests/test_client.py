@@ -8,12 +8,17 @@ import requests
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, PropertyMock, Mock
 from client import GithubOrgClient
-from fixtures import (
-    org_payload,
-    repos_payload,
-    expected_repos,
-    apache2_repos
-)
+import importlib.util
+
+_fixture_path = os.path.join(os.path.dirname(__file__), "fixtures.py")
+_spec = importlib.util.spec_from_file_location("local_fixtures", _fixture_path)
+_local_fixtures = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_local_fixtures)
+
+org_payload = _local_fixtures.org_payload
+repos_payload = _local_fixtures.repos_payload
+expected_repos = _local_fixtures.expected_repos
+apache2_repos = _local_fixtures.apache2_repos
 
 # Only modify sys.path after imports if absolutely needed
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
