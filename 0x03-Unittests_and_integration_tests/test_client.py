@@ -8,7 +8,12 @@ import requests
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, PropertyMock, Mock
 from client import GithubOrgClient
-from fixtures import org_payload, repos_payload, expected_repos, apache2_repos
+from fixtures import (
+    org_payload,
+    repos_payload,
+    expected_repos,
+    apache2_repos
+)
 
 # Only modify sys.path after imports if absolutely needed
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
@@ -27,7 +32,6 @@ class TestGithubOrgClient(unittest.TestCase):
              "repos_url": f"https://api.github.com/orgs/{org_name}/repos"
         }
         mock_get_json.return_value = expected
-
         client = GithubOrgClient(org_name)
         self.assertEqual(client.org, expected)
         mock_get_json.assert_called_once_with(
@@ -59,16 +63,13 @@ class TestGithubOrgClient(unittest.TestCase):
             {"name": "repo3", "license": None},
         ]
         mock_get_json.return_value = repos_payload
-
         client = GithubOrgClient("test")
-
         with patch.object(
             GithubOrgClient, "_public_repos_url", new_callable=PropertyMock
         ) as mock_url:
             mock_url.return_value = "https://api.github.com/orgs/test/repos"
             result = client.public_repos()
             self.assertEqual(sorted(result), ["repo1", "repo2", "repo3"])
-
             mock_url.assert_called_once()
             mock_get_json.assert_called_once_with(mock_url.return_value)
 
