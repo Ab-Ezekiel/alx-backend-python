@@ -4,29 +4,16 @@
 import os
 import sys
 import unittest
+import requests
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, PropertyMock, Mock
 from client import GithubOrgClient
-
-# Load local fixtures.py explicitly and validate required names.
-import runpy
-
-_fixtures_path = os.path.join(os.path.dirname(__file__), "fixtures.py")
-_fixtures_dict = runpy.run_path(_fixtures_path)
-
-_required = ("org_payload", "repos_payload", "expected_repos",
-             "apache2_repos")
-
-missing = [name for name in _required if name not in _fixtures_dict]
-if missing:
-    raise ImportError(
-        f"fixtures.py missing required names: {', '.join(missing)}"
-    )
-
-org_payload = _fixtures_dict["org_payload"]
-repos_payload = _fixtures_dict["repos_payload"]
-expected_repos = _fixtures_dict["expected_repos"]
-apache2_repos = _fixtures_dict["apache2_repos"]
+from fixtures import (
+    org_payload,
+    repos_payload,
+    expected_repos,
+    apache2_repos
+)
 
 
 class TestGithubOrgClient(unittest.TestCase):
