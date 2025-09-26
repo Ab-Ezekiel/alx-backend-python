@@ -120,7 +120,8 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         """Integration test for public_repos filtering by license."""
         client = GithubOrgClient("test")
         self.assertEqual(
-            sorted(client.public_repos("apache-2.0")), sorted(self.apache2_repos))
+            sorted(client.public_repos("apache-2.0")), 
+            sorted(self.apache2_repos))
 
 
 if __name__ == "__main__":
