@@ -7,12 +7,6 @@ from parameterized import parameterized
 from unittest.mock import patch, PropertyMock
 from client import GithubOrgClient
 
-# Ensure repo root is importable
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
-
-
 class TestGithubOrgClient(unittest.TestCase):
     """Tests for the GithubOrgClient class."""
     @parameterized.expand([
