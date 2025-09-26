@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Unit tests for client.GithubOrgClient"""
+import os
+import sys
 import unittest
 from parameterized import parameterized
-from unittest.mock import patch, PropertyMock  # add PropertyMock here
-
+from unittest.mock import patch, PropertyMock
 from client import GithubOrgClient
+
+# Ensure repo root is importable in environments that don't set PYTHONPATH
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -17,7 +23,10 @@ class TestGithubOrgClient(unittest.TestCase):
     @patch("client.get_json")
     def test_org(self, org_name, mock_get_json):
         """Test that org property returns value from get_json."""
-        expected = {"repos_url": f"https://api.github.com/orgs/{org_name}/repos"}
+        expected = {
+            "repos_url": "https://api.github.com/orgs/{org}/repos"
+            .format(org=org_name)
+        }
         mock_get_json.return_value = expected
 
         gh = GithubOrgClient(org_name)
@@ -29,7 +38,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
 
 class TestPublicRepos(unittest.TestCase):
-    """Tests for the GithubOrgClient repos methods."""
+    """Tests for GithubOrgClient repos methods."""
 
     def test_public_repos_url(self):
         """Test that _public_repos_url returns the mocked repos_url."""
@@ -47,7 +56,7 @@ class TestPublicRepos(unittest.TestCase):
 
     @patch("client.get_json")
     def test_public_repos(self, mock_get_json):
-        """Test that public_repos returns the repo names from payload."""
+        """Test public_repos returns repo names and calls get_json once."""
         repos_payload = [
             {"name": "repo1", "license": {"key": "mit"}},
             {"name": "repo2", "license": {"key": "apache-2.0"}},
@@ -56,7 +65,6 @@ class TestPublicRepos(unittest.TestCase):
         mock_get_json.return_value = repos_payload
 
         client = GithubOrgClient("test")
-
         with patch.object(
             GithubOrgClient, "_public_repos_url", new_callable=PropertyMock
         ) as mock_url:
