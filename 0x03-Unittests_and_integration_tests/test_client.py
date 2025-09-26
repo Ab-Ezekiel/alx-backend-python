@@ -29,34 +29,17 @@ class TestGithubOrgClient(unittest.TestCase):
         }
         mock_get_json.return_value = expected
 
-        gh = GithubOrgClient(org_name)
-        result = gh.org
+        client = GithubOrgClient(org_name)
+        result = client.org
         self.assertEqual(result, expected)
         mock_get_json.assert_called_once_with(
             GithubOrgClient.ORG_URL.format(org=org_name)
         )
 
-
-class TestPublicRepos(unittest.TestCase):
-    """Tests for GithubOrgClient repos methods."""
-
-    def test_public_repos_url(self):
-        """Test that _public_repos_url returns the mocked repos_url."""
-        client = GithubOrgClient("test")
-        with patch.object(
-            GithubOrgClient, "org", new_callable=PropertyMock
-        ) as mock_org:
-            mock_org.return_value = {
-                "repos_url": "https://api.github.com/orgs/test/repos"
-            }
-            self.assertEqual(
-                client._public_repos_url,
-                "https://api.github.com/orgs/test/repos"
-            )
-
     @patch("client.get_json")
     def test_public_repos(self, mock_get_json):
         """Test public_repos returns repo names and calls get_json once."""
+
         repos_payload = [
             {"name": "repo1", "license": {"key": "mit"}},
             {"name": "repo2", "license": {"key": "apache-2.0"}},
@@ -75,6 +58,25 @@ class TestPublicRepos(unittest.TestCase):
 
             mock_url.assert_called_once()
             mock_get_json.assert_called_once_with(mock_url.return_value)
+
+
+
+class TestPublicRepos(unittest.TestCase):
+    """Tests for GithubOrgClient repos methods."""
+
+    def test_public_repos_url(self):
+        """Test that _public_repos_url returns the mocked repos_url."""
+        client = GithubOrgClient("test")
+        with patch.object(
+            GithubOrgClient, "org", new_callable=PropertyMock
+        ) as mock_org:
+            mock_org.return_value = {
+                "repos_url": "https://api.github.com/orgs/test/repos"
+            }
+            self.assertEqual(
+                client._public_repos_url,
+                "https://api.github.com/orgs/test/repos"
+            )
 
 
 if __name__ == "__main__":
