@@ -14,7 +14,6 @@ from fixtures import org_payload, repos_payload, expected_repos, apache2_repos
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 
-# ============= Unit Tests =============
 class TestGithubOrgClient(unittest.TestCase):
     """Tests for the GithubOrgClient class."""
     @parameterized.expand([
@@ -84,14 +83,14 @@ class TestGithubOrgClient(unittest.TestCase):
         client = GithubOrgClient("test")
         self.assertEqual(client.has_license(repo, license_key),expected)
 
-# ============= Integration Tests =============
 @parameterized_class(
     ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), 
     [(org_payload, repos_payload, expected_repos, apache2_repos)]
 )
+
+
 class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration tests for GithubOrgClient.public_repos."""
-
     @classmethod
     def setUpClass(cls):
         """Start patching requests.get for integration tests."""
@@ -126,6 +125,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
             sorted(client.public_repos("apache-2.0")), 
             sorted(self.apache2_repos)
         )
+
 
 if __name__ == "__main__":
     unittest.main()
