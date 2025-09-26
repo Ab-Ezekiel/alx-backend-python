@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """Unit tests for client.GithubOrgClient"""
+
 import os
 import sys
 import unittest
 import requests
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from parameterized import parameterized, parameterized_class
 from unittest.mock import patch, PropertyMock, Mock
 from client import GithubOrgClient
 from fixtures import org_payload, repos_payload, expected_repos, apache2_repos
 
+# Only modify sys.path after imports if absolutely needed
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+
+# ============= Unit Tests =============
 class TestGithubOrgClient(unittest.TestCase):
     """Tests for the GithubOrgClient class."""
     @parameterized.expand([
@@ -78,11 +82,11 @@ class TestGithubOrgClient(unittest.TestCase):
         Covers both matching and non-matching license case.
         """
         client = GithubOrgClient("test")
-        self.assertEqual(client.has_license(repo, license_key), expected)
+        self.assertEqual(client.has_license(repo, license_key), 
+        expected)
 
 
-# ================= Integration Tests =================
-
+# ============= Integration Tests =============
 @parameterized_class(
     ('org_payload', 'repos_payload', 'expected_repos', 'apache2_repos'), 
     [(org_payload, repos_payload, expected_repos, apache2_repos)]
@@ -114,13 +118,15 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     def test_public_repos(self):
         """Integration test for public_repos returns expected repo names."""
         client = GithubOrgClient("test")
-        self.assertEqual(sorted(client.public_repos()), sorted(self.expected_repos))
+        self.assertEqual(sorted(client.public_repos()), 
+        sorted(self.expected_repos))
 
     def test_public_repos_with_license(self):
         """Integration test for public_repos filtering by license."""
         client = GithubOrgClient("test")
         self.assertEqual(
-            sorted(client.public_repos("apache-2.0")), sorted(self.apache2_repos)
+            sorted(client.public_repos("apache-2.0")), 
+            sorted(self.apache2_repos)
         )
 
 
