@@ -1,4 +1,5 @@
 # messaging_app/chats/views.py
+from django.core.exceptions import FieldError
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -7,49 +8,43 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
+from .permissions import IsParticipantOfConversation
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Conversation:
-    - list: returns conversations the requesting user participates in
-    - create: create a new conversation (provide participants_ids)
-    - retrieve/update/destroy: standard ModelViewSet behavior
-    - messages (custom action): GET list messages in this conversation, POST send message to this conversation
-    """
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
-    permission_classes = [IsAuthenticated]
+    # Enforce authentication + object-level participant checks
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-    # <-- use rest_framework.filters here (autograder expects the 'filters' symbol)
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['participants__username', 'participants__email']
+    search_fields = ['participants__email']
     ordering_fields = ['created_at']
     ordering = ['-created_at']
 
     def get_queryset(self):
-        # Only return conversations the request.user is a participant of
         user = self.request.user
-        return Conversation.objects.filter(participants=user).distinct()
+        try:
+            # Explicitly reference the real PK field name `user_id`
+            return Conversation.objects.filter(participants__user_id=user.user_id).distinct()
+        except FieldError as ex:
+            import logging
+            logging.exception("FieldError while building Conversation queryset: %s", ex)
+            return Conversation.objects.none()
 
     def perform_create(self, serializer):
-        # ConversationSerializer handles participants via participants_ids.
+        # Creating a conversation is allowed for authenticated users; serializer will set participants
         serializer.save()
 
     @action(detail=True, methods=['get', 'post'], url_path='messages', url_name='conversation-messages')
     def messages(self, request, pk=None):
-        """
-        GET: return messages for this conversation (paginated by default DRF settings).
-        POST: create/send a new message in this conversation. Request body should include `message_body`.
-              Sender is set to request.user (server-side) to avoid spoofing.
-        """
         try:
             conversation = Conversation.objects.get(pk=pk)
         except Conversation.DoesNotExist:
             return Response({"detail": "Conversation not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Ensure the requester is a participant
-        if not conversation.participants.filter(pk=request.user.pk).exists():
+        # Ensure the requester is a participant (use permission helper)
+        if not IsParticipantOfConversation.user_is_participant_of_conversation(request.user, conversation):
             raise PermissionDenied("You are not a participant of this conversation.")
 
         if request.method == 'GET':
@@ -63,7 +58,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
         # POST - create a message in this conversation; sender forced to request.user
         data = request.data.copy()
-        data['conversation'] = str(conversation.pk)  # ensure serializer sees the correct conversation
+        data['conversation'] = str(conversation.pk)
         serializer = MessageSerializer(data=data)
         if serializer.is_valid():
             try:
@@ -76,32 +71,31 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for Message:
-    - list: can filter by `?conversation=<conversation_id>` query param
-    - create: create message; sender will be set to request.user (server-side)
-    """
     queryset = Message.objects.all().order_by('-sent_at')
     serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-    # <-- use filters for search & ordering (and satisfy autograder)
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['message_body', 'sender__username', 'sender__email']
+    search_fields = ['message_body', 'sender__email']
     ordering_fields = ['sent_at']
     ordering = ['-sent_at']
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        conversation_id = self.request.query_params.get('conversation')
-        if conversation_id:
-            qs = qs.filter(conversation__pk=conversation_id)
-        # Restrict to messages in conversations the requesting user participates in
-        qs = qs.filter(conversation__participants=self.request.user).distinct()
-        return qs
+        try:
+            qs = super().get_queryset()
+            conversation_id = self.request.query_params.get('conversation')
+            if conversation_id:
+                qs = qs.filter(conversation__pk=conversation_id)
+            # restrict to messages in conversations the requesting user participates in
+            qs = qs.filter(conversation__participants__user_id=self.request.user.user_id).distinct()
+            return qs
+        except FieldError as ex:
+            import logging
+            logging.exception("FieldError while building Message queryset: %s", ex)
+            return Message.objects.none()
 
     def perform_create(self, serializer):
-        # Determine conversation from validated_data or request
+        # Validate the conversation and membership
         conversation = serializer.validated_data.get('conversation', None)
         if conversation is None:
             conv_pk = self.request.data.get('conversation')
@@ -112,8 +106,8 @@ class MessageViewSet(viewsets.ModelViewSet):
             except Conversation.DoesNotExist:
                 raise ValidationError({"conversation": "Conversation does not exist."})
 
-        if not conversation.participants.filter(pk=self.request.user.pk).exists():
+        if not IsParticipantOfConversation.user_is_participant_of_conversation(self.request.user, conversation):
             raise PermissionDenied("You are not a participant of this conversation.")
 
-        # force the sender to be request.user (ignore any sender_id submitted by client)
+        # Force the sender to the request user (ignore client-supplied sender_id)
         serializer.save(sender=self.request.user)
