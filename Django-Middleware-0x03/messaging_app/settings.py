@@ -91,8 +91,8 @@ MIDDLEWARE = [
     
      # Custom middleware (order matters)
     
-    "chats.middleware.RequestLoggingMiddleware",
-    "chats.middleware.RestrictAccessByTimeMiddleware",
+    'chats.middleware.RequestLoggingMiddleware',
+    'chats.middleware.RestrictAccessByTimeMiddleware',
 ]
 
 ROOT_URLCONF = 'messaging_app.urls'
