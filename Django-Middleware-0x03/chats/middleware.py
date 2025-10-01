@@ -79,6 +79,7 @@ class RestrictAccessByTimeMiddleware:
                 return HttpResponseForbidden("Chat is available only during allowed hours.")
         return self.get_response(request)
     
+    
 class OffensiveLanguageMiddleware:
     """
     Rate-limit POST requests to chat endpoints by IP address.
