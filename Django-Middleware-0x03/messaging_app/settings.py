@@ -90,7 +90,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     
      # Custom middleware (order matters)
-    
+    'chats.middleware.OffensiveLanguageMiddleware',
     'chats.middleware.RequestLoggingMiddleware',
     'chats.middleware.RestrictAccessByTimeMiddleware',
 ]
@@ -170,6 +170,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # configure chat prefixes and allowed hours:
 CHAT_ALLOWED_START_HOUR = 0
-CHAT_ALLOWED_END_HOUR = 2
+CHAT_ALLOWED_END_HOUR = 24
 CHAT_URL_PREFIXES = ["/chats", "/api/conversations", "/api/messages"]
 
+CHAT_RATE_LIMIT_COUNT = 5      # messages per window
+CHAT_RATE_LIMIT_WINDOW = 60    # window seconds (60s = 1 minute)
