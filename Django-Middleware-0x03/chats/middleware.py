@@ -148,7 +148,7 @@ class OffensiveLanguageMiddleware:
         return self.get_response(request)
     
     
-class RolePermissionMiddleware:
+class RolepermissionMiddleware:
     """
     Middleware that enforces role-based permissions on protected chat paths.
     It will:
