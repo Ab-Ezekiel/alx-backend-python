@@ -7,6 +7,9 @@ import time
 import threading
 from collections import deque
 from django.http import HttpResponse, HttpResponseForbidden
+from django.http import JsonResponse
+from django.contrib.auth import get_user_model
+from rest_framework_simplejwt.tokens import AccessToken
 
 
 
@@ -142,4 +145,83 @@ class OffensiveLanguageMiddleware:
 
                 dq.append(now_ts)
 
+        return self.get_response(request)
+
+
+class RolePermissionMiddleware:
+    """
+    Middleware that enforces role-based permissions on protected chat paths.
+    It will:
+      - If Authorization: Bearer <token> header present, try to decode it and attach user to request.
+      - For protected paths, allow only users with role 'admin' or 'moderator', or users with is_staff/is_superuser.
+      - If no token and user not authenticated, return 403.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # tweak these paths as needed for your app
+        self.protected_paths = [
+            "/chats/admin",
+            "/api/conversations/admin",
+            "/api/messages/delete",
+            # add more endpoints that require admin/moderator role
+        ]
+
+    def _path_is_protected(self, path: str) -> bool:
+        if not path:
+            return False
+        return any(path.startswith(p) for p in self.protected_paths)
+
+    def _get_user_from_token(self, token_str):
+        """
+        Try to decode an access token and return a Django user instance or None.
+        """
+        try:
+            token = AccessToken(token_str)
+            payload = getattr(token, "payload", None)
+            if payload is None:
+                # fallback: try to convert token to dict (rare)
+                try:
+                    payload = dict(token)
+                except Exception:
+                    return None
+            # possible claim key: 'user_id' or 'user_id' depending on setup
+            user_id = payload.get("user_id") or payload.get("user_id")
+            if not user_id:
+                return None
+            User = get_user_model()
+            return User.objects.filter(pk=user_id).first()
+        except Exception:
+            return None
+
+    def __call__(self, request):
+        path = request.path or "/"
+
+        # If there's a Bearer token, try to decode and attach a user to request
+        auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+        if auth_header.startswith("Bearer "):
+            token_str = auth_header.split(" ", 1)[1].strip()
+            user = self._get_user_from_token(token_str)
+            if user:
+                # attach user to request so permission checks see it
+                request.user = user
+
+        # If the path is protected, enforce role check
+        if self._path_is_protected(path):
+            user = getattr(request, "user", None)
+            if not user or not getattr(user, "is_authenticated", False):
+                return JsonResponse({"error": "Authentication required"}, status=403)
+
+            # allow staff/superuser
+            if getattr(user, "is_superuser", False) or getattr(user, "is_staff", False):
+                return self.get_response(request)
+
+            # check custom role attribute if present
+            role = getattr(user, "role", None)
+            if role in ("admin", "moderator"):
+                return self.get_response(request)
+
+            return JsonResponse({"error": "Permission denied"}, status=403)
+
+        # non-protected path — continue
         return self.get_response(request)
