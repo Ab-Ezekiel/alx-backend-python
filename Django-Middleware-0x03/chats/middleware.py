@@ -146,8 +146,8 @@ class OffensiveLanguageMiddleware:
                 dq.append(now_ts)
 
         return self.get_response(request)
-
-
+    
+    
 class RolePermissionMiddleware:
     """
     Middleware that enforces role-based permissions on protected chat paths.
