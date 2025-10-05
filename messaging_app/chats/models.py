@@ -45,6 +45,11 @@ class User(AbstractUser):
         if self.password:
             self.password_hash = self.password
         super().save(*args, **kwargs)
+    
+    @property
+    def id(self):
+        # Make libraries that expect `user.id` happy by mapping to `user_id`
+        return self.user_id
 
     def __str__(self):
         return f"{self.username} ({self.email})"

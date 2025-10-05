@@ -3,3 +3,63 @@
 2025-09-29 20:54:34.273241 - User: Anonymous - Path: /
 2025-09-29 20:54:36.444199 - User: Anonymous - Path: /
 2025-09-29 20:54:39.811834 - User: Anonymous - Path: /
+2025-09-29T22:05:44.498675+00:00 - User: Anonymous - Path: /api/token/
+2025-09-29T22:06:16.176004+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:20:39.824225+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:20:39.825530+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.347144+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.353335+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.387428+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.387557+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.400483+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.400603+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.415402+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.415519+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.427862+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.428007+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-29T22:50:09.443688+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
+2025-09-30T18:46:37.836645+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.837561+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.857797+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.857944+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.871252+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.871383+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.883969+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.884104+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.899073+00:00 - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.899219+00:00 - BLOCK (outside allowed hours) - User: Anonymous - Path: /api/messages/
+2025-09-30T18:46:37.913840+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
+2025-10-01T08:59:00.926682+00:00 - User: Anonymous - Path: /api/messages/
+2025-10-01T08:59:00.946059+00:00 - User: Anonymous - Path: /api/messages/
+2025-10-01T08:59:00.961022+00:00 - User: Anonymous - Path: /api/messages/
+2025-10-01T08:59:00.975825+00:00 - User: Anonymous - Path: /api/messages/
+2025-10-01T08:59:00.989833+00:00 - User: Anonymous - Path: /api/messages/
+2025-10-01T08:59:01.005154+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
+2025-10-01T09:54:11.720556+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T09:54:43.302705+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T09:54:58.723759+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T09:57:21.574507+00:00 - User: Anonymous - Path: /api/token/refresh/
+2025-10-01T10:04:38.230656+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T10:24:29.144787+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T10:25:55.749133+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T10:44:31.345338+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T10:48:51.807379+00:00 - User: admin (admin@gmail.com) - Path: /chats/admin
+2025-10-01T10:54:15.218658+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:13:00.305191+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:13:40.488463+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:14:13.982302+00:00 - User: Anonymous - Path: /api/token/
+2025-10-01T11:15:09.776123+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:18:54.567181+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:19:33.603607+00:00 - User: admin (admin@gmail.com) - Path: /api/conversations/1/messages/
+2025-10-01T11:23:04.230972+00:00 - User: admin (admin@gmail.com) - Path: /api/conversations/
+2025-10-01T11:23:16.917289+00:00 - User: admin (admin@gmail.com) - Path: /api/conversations/
+2025-10-01T11:26:01.725617+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:28:28.379796+00:00 - User: admin (admin@gmail.com) - Path: /api/conversations/687a1063-c1da-4a16-8b4b-ad4cc9195161/messages/
+2025-10-01T11:29:32.709757+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:29:32.736674+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:29:32.761055+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:29:32.797089+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:29:32.821518+00:00 - User: admin (admin@gmail.com) - Path: /api/messages/
+2025-10-01T11:29:32.843673+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
+2025-10-01T11:29:32.858773+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
+2025-10-01T11:29:32.872007+00:00 - RATE-LIMIT BLOCK ip=127.0.0.1 path=/api/messages/
