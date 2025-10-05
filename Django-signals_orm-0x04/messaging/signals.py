@@ -3,6 +3,8 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django.db import models
+from .models import Message
+
 
 from .models import Message, Notification, MessageHistory
 
@@ -43,3 +45,9 @@ def delete_user_related_data(sender, instance, **kwargs):
     MessageHistory.objects.filter(
         models.Q(message__sender=instance) | models.Q(message__receiver=instance)
     ).delete()
+
+@receiver(pre_save, sender=Message)
+def ensure_thread_root(sender, instance, **kwargs):
+    if instance.parent_message and not instance.thread_root:
+        parent = instance.parent_message
+        instance.thread_root = parent.thread_root or parent
