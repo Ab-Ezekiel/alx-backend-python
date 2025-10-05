@@ -1,6 +1,5 @@
 # messaging/models.py
 from django.db import models
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -14,6 +13,8 @@ class Message(models.Model):
     )
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    # new field to track whether the message has ever been edited
+    edited = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Message {self.pk} from {self.sender} to {self.receiver}"
@@ -33,3 +34,20 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"Notification {self.pk} for {self.user} - read={self.is_read}"
+
+class MessageHistory(models.Model):
+    """
+    Stores historical versions of Message.content before edits.
+    Each record stores the previous content and when the edit happened.
+    """
+    message = models.ForeignKey(
+        Message, related_name='history', on_delete=models.CASCADE
+    )
+    old_content = models.TextField()
+    edited_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-edited_at']
+
+    def __str__(self):
+        return f"History for Message {self.message_id} at {self.edited_at.isoformat()}"
