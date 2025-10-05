@@ -16,7 +16,7 @@ def inbox_view(request):
     Manager usage: Message.unread.for_user(request.user)
     """
     # use the custom manager to get unread messages and minimize fields retrieved
-    unread_qs = Message.unread.for_user(request.user).select_related('sender').order_by('-timestamp')
+    unread_qs = Message.unread.unread.for_user(request.user).select_related('sender').order_by('-timestamp')
 
     # unread_qs already used .only() inside manager.for_user, but we can still select_related for sender
     # pass to template
