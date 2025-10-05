@@ -15,6 +15,15 @@ class Message(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     # new field to track whether the message has ever been edited
     edited = models.BooleanField(default=False)
+    
+    # new field requested by autograder: who last edited this message (nullable)
+    edited_by = models.ForeignKey(
+        User,
+        related_name='edited_messages',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
 
     def __str__(self):
         return f"Message {self.pk} from {self.sender} to {self.receiver}"
