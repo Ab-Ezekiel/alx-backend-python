@@ -86,3 +86,17 @@ class DeleteUserSignalTests(TestCase):
         self.assertFalse(Notification.objects.filter(message__in=[m1.pk, m2.pk]).exists())
         self.assertFalse(MessageHistory.objects.filter(message__in=[m1.pk, m2.pk]).exists())
 
+
+class UnreadMessagesManagerTests(TestCase):
+    def setUp(self):
+        self.u1 = User.objects.create_user(username='sender', password='pass')
+        self.u2 = User.objects.create_user(username='recv', password='pass')
+        # create one read and one unread
+        Message.objects.create(sender=self.u1, receiver=self.u2, content='unread1', read=False)
+        Message.objects.create(sender=self.u1, receiver=self.u2, content='read1', read=True)
+
+    def test_unread_manager_filters_unread_for_user(self):
+        qs = Message.unread.for_user(self.u2)
+        self.assertEqual(qs.count(), 1)
+        m = qs.first()
+        self.assertEqual(m.content, 'unread1')

@@ -4,6 +4,24 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
+class UnreadMessagesManager(models.Manager):
+    """
+    Manager that filters unread messages for a given user.
+    Usage: Message.unread.for_user(user)
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(read=False)
+
+    def for_user(self, user):
+        """
+        Return unread messages where the given user is receiver.
+        Use .only() to fetch necessary fields only.
+        """
+        # Only select commonly needed fields to reduce bandwidth
+        return self.get_queryset().filter(receiver=user).only('id', 'sender_id', 'receiver_id', 'content', 'timestamp', 'parent_message_id')
+
+
 class Message(models.Model):
     sender = models.ForeignKey(
         User, related_name='sent_messages', on_delete=models.CASCADE
@@ -39,6 +57,13 @@ class Message(models.Model):
         blank=True,
         on_delete=models.SET_NULL
     )
+
+    # NEW field required by this task: whether message has been read
+    read = models.BooleanField(default=False)
+
+    # Managers: default + unread manager
+    objects = models.Manager()  # default manager
+    unread = UnreadMessagesManager()  # custom manager
 
     def __str__(self):
         return f"Message {self.pk} from {self.sender} to {self.receiver}"
@@ -96,3 +121,5 @@ class MessageHistory(models.Model):
 
     def __str__(self):
         return f"History for Message {self.message_id} at {self.edited_at.isoformat()}"
+
+
