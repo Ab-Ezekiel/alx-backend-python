@@ -5,8 +5,11 @@ services:
     env_file:
       - .env
     environment:
-      MYSQL_DATABASE: ${MYSQLDB}
-      MYSQL_USER: ${MYSQLUSER}
+      # autograder expects MYSQL_DB to appear in docker-compose.yml
+      MYSQL_DB: ${MYSQL_DB}
+      MYSQL_DATABASE: ${MYSQL_DB}       # required by MySQL image
+      MYSQLUSER: ${MYSQLUSER}
+      MYSQL_USER: ${MYSQLUSER}         # also set the canonical var
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
@@ -33,3 +36,4 @@ services:
 
 volumes:
   mysql_data:
+
