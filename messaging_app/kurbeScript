@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# kurbeScript - start a local minikube cluster, verify it, and list pods
+# Place in messaging_app/ and run: chmod +x kurbeScript && ./kurbeScript
+set -euo pipefail
+
+MSG_PREFIX="[kurbeScript]"
+
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+confirm() {
+  # usage: confirm "Question?"
+  read -r -p "$1 [y/N]: " ans
+  case "$ans" in
+    [Yy]|[Yy][Ee][Ss]) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+echo "$MSG_PREFIX Checking prerequisites..."
+
+# 1) Check docker (recommended driver)
+if command_exists docker; then
+  echo "$MSG_PREFIX docker found: $(docker --version | head -n1)"
+  DOCKER_AVAILABLE=true
+else
+  echo "$MSG_PREFIX docker not found. Minikube can run with other drivers but docker is recommended."
+  DOCKER_AVAILABLE=false
+fi
+
+# 2) Check kubectl
+if ! command_exists kubectl; then
+  echo "$MSG_PREFIX kubectl not found."
+  if confirm "Install kubectl now (requires sudo and internet)?"; then
+    echo "$MSG_PREFIX Installing kubectl..."
+    # try to install kubectl (common reliable method)
+    KUBECTL_URL="https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    sudo curl -fsSL "$KUBECTL_URL" -o /usr/local/bin/kubectl
+    sudo chmod +x /usr/local/bin/kubectl
+    echo "$MSG_PREFIX kubectl installed to /usr/local/bin/kubectl"
+  else
+    echo "$MSG_PREFIX Please install kubectl and re-run the script."
+    exit 1
+  fi
+else
+  echo "$MSG_PREFIX kubectl found: $(kubectl version --client --short 2>/dev/null || kubectl version --client)"
+fi
+
+# 3) Check minikube
+if ! command_exists minikube; then
+  echo "$MSG_PREFIX minikube not found."
+  if confirm "Install minikube now (requires sudo and internet)?"; then
+    echo "$MSG_PREFIX Downloading minikube..."
+    sudo curl -Lo /usr/local/bin/minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+    sudo chmod +x /usr/local/bin/minikube
+    echo "$MSG_PREFIX minikube installed to /usr/local/bin/minikube"
+  else
+    echo "$MSG_PREFIX Please install minikube and re-run the script."
+    exit 1
+  fi
+else
+  echo "$MSG_PREFIX minikube found: $(minikube version)"
+fi
+
+# 4) Start minikube
+START_CMD=("minikube" "start")
+if [ "$DOCKER_AVAILABLE" = true ]; then
+  START_CMD+=("--driver=docker")
+  echo "$MSG_PREFIX Using docker driver for minikube start."
+else
+  echo "$MSG_PREFIX Docker not available — minikube will choose a default driver (might require virtualization support)."
+fi
+
+echo "$MSG_PREFIX Starting minikube (this may take a few minutes)..."
+"${START_CMD[@]}"
+
+echo "$MSG_PREFIX Waiting for cluster to be ready..."
+# give kubectl some time; kubectl will error until cluster is ready
+kubectl wait --for=condition=Ready --all pods --all-namespaces --timeout=120s 2>/dev/null || true
+
+# 5) Verify cluster and list pods
+echo
+echo "$MSG_PREFIX kubectl cluster-info:"
+kubectl cluster-info || { echo "$MSG_PREFIX Failed to get cluster-info"; exit 1; }
+
+echo
+echo "$MSG_PREFIX Listing nodes:"
+kubectl get nodes -o wide || true
+
+echo
+echo "$MSG_PREFIX Listing all pods (all namespaces):"
+kubectl get pods -A || true
+
+echo
+echo "$MSG_PREFIX Minikube status:"
+minikube status
+
+echo
+echo "$MSG_PREFIX DONE — cluster should be running. To stop the cluster run: minikube stop"
+echo "$MSG_PREFIX To delete the cluster: minikube delete"
+exit 0
