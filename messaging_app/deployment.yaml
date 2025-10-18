@@ -1,4 +1,3 @@
-# messaging_app/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,14 +16,23 @@ spec:
     spec:
       containers:
         - name: web
-          # UPDATE THIS IMAGE if your image tag is different (e.g. messaging-app:local)
           image: messaging_app-web
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
-          # Keep env minimal — the app will read settings from env if you set them
-          # You can add env: - name: DJANGO_SETTINGS_MODULE value: messaging_app.settings
-          # or mount a Secret/ConfigMap later for DB credentials.
+          env:
+            - name: MYSQL_HOST
+              value: "db"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_DB
+              value: "messaging"
+            - name: MYSQLUSER
+              value: "messaging_user"
+            - name: MYSQL_PASSWORD
+              value: "supersecretpassword"
+            - name: DJANGO_SECRET_KEY
+              value: "dev-secret"
 ---
 apiVersion: v1
 kind: Service
@@ -39,5 +47,4 @@ spec:
   ports:
     - port: 8000
       targetPort: 8000
-      protocol: TCP
       name: http
