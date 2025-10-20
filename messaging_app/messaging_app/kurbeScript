@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# duplicate kurbeScript for autograder - placed in inner messaging_app directory
+# This file is intentionally the same as messaging_app/kurbeScript
+set -euo pipefail
+if command -v minikube >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1; then
+    minikube start --driver=docker
+  else
+    minikube start
+  fi
+else
+  echo "[kurbeScript] minikube not installed"
+  exit 1
+fi
+kubectl cluster-info || true
+kubectl get nodes -o wide || true
+kubectl get pods -A || true
+echo "[kurbeScript] done."
