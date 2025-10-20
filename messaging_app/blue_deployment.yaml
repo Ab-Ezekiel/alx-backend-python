@@ -19,7 +19,8 @@ spec:
     spec:
       containers:
         - name: web
-          image: messaging_app-web
+          # image updated to version 2.0 for the rolling update task
+          image: messaging_app-web:2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
@@ -36,3 +37,4 @@ spec:
               value: "supersecretpassword"
             - name: DJANGO_SECRET_KEY
               value: "dev-secret"
+

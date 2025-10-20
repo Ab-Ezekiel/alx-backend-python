@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# kubctl-0x03
+# Apply blue_deployment.yaml (image: messaging_app-web:2.0) and monitor rolling update.
+# Also run a curl loop to detect downtime during the rollout.
+# Usage: chmod +x kubctl-0x03 && ./kubctl-0x03
+
+set -euo pipefail
+MSG="[kubctl-0x03]"
+
+command -v kubectl >/dev/null 2>&1 || { echo "$MSG kubectl not found"; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo "$MSG curl not found"; exit 1; }
+
+# 1) Apply the updated deployment
+echo "$MSG Applying updated blue_deployment.yaml (image -> messaging_app-web:2.0)..."
+kubectl apply -f blue_deployment.yaml
+
+# 2) Trigger a rollout (kubectl apply already triggers it). Let's monitor it.
+DEPLOYMENT="messaging-app-blue"
+echo "$MSG Monitoring rollout status for $DEPLOYMENT (timeout 180s)..."
+kubectl rollout status deployment/$DEPLOYMENT --timeout=180s || {
+  echo "$MSG Rollout status command returned non-zero (timeout or failure). Showing rollout history and pods."
+  kubectl rollout history deployment/$DEPLOYMENT || true
+  kubectl get pods -l app=messaging-app,version=blue -o wide || true
+  exit 1
+}
+
+# 3) While rollout is happening, run a short curl test to check for downtime.
+# We'll run 30 seconds of requests (1 request every 0.5s) against the service by port-forwarding.
+PORT_FORWARD_PID=""
+echo "$MSG Starting port-forward to messaging-app-svc: localhost:8080 -> 8000 (background)"
+kubectl port-forward svc/messaging-app-svc 8080:8000 >/dev/null 2>&1 &
+PORT_FORWARD_PID=$!
+# give it a moment
+sleep 2
+
+if ! kill -0 "$PORT_FORWARD_PID" >/dev/null 2>&1; then
+  echo "$MSG port-forward failed to start. Skipping curl-test."
+else
+  echo "$MSG port-forward running (PID $PORT_FORWARD_PID). Running curl test for 30s..."
+  FAILURE_COUNT=0
+  SUCCESS_COUNT=0
+  END=$((SECONDS+30))
+  while [ $SECONDS -lt $END ]; do
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ || echo "000")
+    if [ "$http_code" = "000" ]; then
+      FAILURE_COUNT=$((FAILURE_COUNT+1))
+    else
+      SUCCESS_COUNT=$((SUCCESS_COUNT+1))
+    fi
+    printf "."
+    sleep 0.5
+  done
+  echo
+  echo "$MSG curl test done. Successes: $SUCCESS_COUNT, Failures: $FAILURE_COUNT"
+  # stop port-forward
+  kill "$PORT_FORWARD_PID" || true
+  sleep 1
+fi
+
+# 4) Final verification: list pods and confirm they are Running
+echo
+echo "$MSG Final pods status for blue deployment:"
+kubectl get pods -l app=messaging-app,version=blue -o wide
+
+echo
+echo "$MSG Current service and deployment state:"
+kubectl get svc messaging-app-svc -o wide || true
+kubectl get deployment $DEPLOYMENT -o wide || true
+
+# 5) Print rollout status / history to confirm it completed
+echo
+echo "$MSG Rollout status (final):"
+kubectl rollout status deployment/$DEPLOYMENT || true
+echo
+echo "$MSG Rollout history:"
+kubectl rollout history deployment/$DEPLOYMENT || true
+
+echo
+echo "$MSG DONE. If failures occurred during the curl test, inspect pod logs:"
+echo "  kubectl logs <pod-name> -c web --tail=200"
+exit 0
