@@ -18,3 +18,5 @@ kubectl cluster-info || true
 kubectl get nodes -o wide || true
 kubectl get pods -A || true
 echo "[kurbeScript] done."
+
+# commit-time: 2025-10-20T09:04:58Z
