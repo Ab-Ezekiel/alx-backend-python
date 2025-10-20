@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# kubctl-0x01
+# Scale messaging-app to 3 replicas, verify pods, do a simple load-check (wrk if available),
+# and show resource usage (kubectl top). Place in messaging_app/ (and optionally the inner folder).
+# Usage: chmod +x kubctl-0x01 && ./kubctl-0x01
+
+set -euo pipefail
+MSG="[kubctl-0x01]"
+
+command_exists() { command -v "$1" >/dev/null 2>&1; }
+
+echo "$MSG Checking kubectl..."
+if ! command_exists kubectl; then
+  echo "$MSG kubectl not found. Please install kubectl and re-run."
+  exit 1
+fi
+
+# 1) Scale the deployment to 3 replicas
+echo "$MSG Scaling deployment 'messaging-app' to 3 replicas..."
+kubectl scale deployment messaging-app --replicas=3
+
+# 2) Wait for pods to be ready
+echo "$MSG Waiting for all messaging-app pods to become Ready (timeout 180s)..."
+kubectl wait --for=condition=ready pod -l app=messaging-app --timeout=180s || {
+  echo "$MSG Some pods did not become ready within timeout. Showing pod status below."
+  kubectl get pods -l app=messaging-app -o wide
+  echo "$MSG Proceeding anyway (check logs for failures)"
+}
+
+# show pods
+echo
+echo "$MSG Current messaging-app pods:"
+kubectl get pods -l app=messaging-app -o wide
+
+# 3) Ensure metrics-server (for kubectl top) is available — try kubectl top and if it fails attempt minikube addon
+echo
+echo "$MSG Checking kubectl top availability..."
+if kubectl top nodes >/dev/null 2>&1; then
+  echo "$MSG kubectl top is available."
+else
+  echo "$MSG kubectl top failed. Attempting to enable metrics-server via minikube (if minikube exists)."
+  if command_exists minikube; then
+    echo "$MSG Enabling metrics-server addon (minikube)..."
+    minikube addons enable metrics-server || echo "$MSG minikube addons enable failed (continue anyway)"
+    echo "$MSG Waiting 10s for metrics to register..."
+    sleep 10
+  else
+    echo "$MSG minikube not available. If you're on a cluster, ensure metrics-server is installed."
+  fi
+fi
+
+echo
+echo "$MSG Showing resource usage (kubectl top nodes + pods):"
+kubectl top nodes || echo "$MSG kubectl top nodes failed"
+kubectl top pods -l app=messaging-app || echo "$MSG kubectl top pods failed for messaging-app"
+
+# 4) Quick load test via wrk if available, else fallback to curl-based parallel hits
+echo
+echo "$MSG Preparing simple load test against service 'messaging-app-svc' (port-forward to localhost:8080)..."
+
+# start port-forward in background
+kubectl_port_forward_pid=""
+kubectl port-forward svc/messaging-app-svc 8080:8000 >/dev/null 2>&1 &
+kub_pf_pid=$!
+kubectl_port_forward_pid=$kub_pf_pid
+# give it a moment
+sleep 2
+
+# check port-forward is still running
+if ! kill -0 "$kubectl_port_forward_pid" >/dev/null 2>&1; then
+  echo "$MSG port-forward failed to start. Aborting load test."
+else
+  echo "$MSG port-forward started (PID $kubectl_port_forward_pid)."
+
+  TARGET="http://127.0.0.1:8080/"
+
+  if command_exists wrk; then
+    echo "$MSG Running wrk load test (2 threads, 100 connections, 10s)..."
+    wrk -t2 -c100 -d10s "$TARGET" || echo "$MSG wrk failed or exited non-zero"
+  else
+    echo "$MSG wrk not found. Falling back to a simple curl-based parallel test (not as accurate)."
+    echo "$MSG Spawning 50 parallel curl requests for 10s..."
+    end=$((SECONDS+10))
+    while [ $SECONDS -lt $end ]; do
+      for i in $(seq 1 50); do
+        curl -s -o /dev/null -w "%{http_code} " "$TARGET" &
+      done
+      wait
+      echo
+    done
+    echo "$MSG curl-based test complete."
+  fi
+
+  # stop port-forward
+  echo "$MSG Stopping port-forward (PID $kubectl_port_forward_pid)..."
+  kill "$kubectl_port_forward_pid" || true
+  sleep 1
+fi
+
+# 5) Final pods + logs quick-check
+echo
+echo "$MSG Final pods status:"
+kubectl get pods -l app=messaging-app -o wide
+
+echo
+echo "$MSG If you want to inspect logs of any pod, run:"
+echo "  kubectl logs <pod-name> -c web --tail=200"
+echo
+echo "$MSG DONE."
+exit 0
