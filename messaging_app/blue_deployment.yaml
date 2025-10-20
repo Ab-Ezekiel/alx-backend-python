@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-app-blue
+  labels:
+    app: messaging-app
+    version: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: messaging-app
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: messaging-app
+        version: blue
+    spec:
+      containers:
+        - name: web
+          image: messaging_app-web
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MYSQL_HOST
+              value: "db"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_DB
+              value: "messaging"
+            - name: MYSQLUSER
+              value: "messaging_user"
+            - name: MYSQL_PASSWORD
+              value: "supersecretpassword"
+            - name: DJANGO_SECRET_KEY
+              value: "dev-secret"

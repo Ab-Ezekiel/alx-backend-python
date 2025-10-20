@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# kubctl-0x02 - simple blue/green deploy script
+# Usage: chmod +x kubctl-0x02 && ./kubctl-0x02
+set -euo pipefail
+MSG="[kubctl-0x02]"
+
+command -v kubectl >/dev/null 2>&1 || { echo "$MSG kubectl not found"; exit 1; }
+
+echo "$MSG Applying blue deployment..."
+kubectl apply -f blue_deployment.yaml
+
+echo "$MSG Applying green deployment..."
+kubectl apply -f green_deployment.yaml
+
+echo "$MSG Applying/ensuring Service (will initially point to blue)..."
+kubectl apply -f kubeservice.yaml
+
+# Wait for blue to be ready
+echo "$MSG Waiting for blue pods to be Ready..."
+kubectl wait --for=condition=ready pod -l app=messaging-app,version=blue --timeout=120s || echo "$MSG blue pods not ready in time"
+
+# Wait for green pods to be created and ready
+echo "$MSG Waiting for green pods to be Ready..."
+kubectl wait --for=condition=ready pod -l app=messaging-app,version=green --timeout=120s || echo "$MSG green pods not ready in time"
+
+echo
+echo "$MSG Current pods:"
+kubectl get pods -l app=messaging-app -o wide
+
+echo
+echo "$MSG Showing recent logs from green pods (if any):"
+GREEN_PODS=$(kubectl get pods -l app=messaging-app,version=green -o jsonpath='{.items[*].metadata.name}')
+if [ -n "$GREEN_PODS" ]; then
+  for p in $GREEN_PODS; do
+    echo "---- logs for $p ----"
+    kubectl logs "$p" -c web --tail=200 || true
+  done
+else
+  echo "$MSG No green pods found yet."
+fi
+
+echo
+echo "$MSG Switching Service selector to green (traffic cut-over)..."
+kubectl patch svc messaging-app-svc -p '{"spec":{"selector":{"app":"messaging-app","version":"green"}}}'
+
+echo "$MSG Waiting a few seconds for traffic to settle..."
+sleep 5
+
+echo "$MSG Pods after switch:"
+kubectl get pods -l app=messaging-app -o wide
+echo
+echo "$MSG To rollback traffic to blue:"
+echo "  kubectl patch svc messaging-app-svc -p '{\"spec\":{\"selector\":{\"app\":\"messaging-app\",\"version\":\"blue\"}}}'"
+echo
+echo "$MSG DONE."

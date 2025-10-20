@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-app-green
+  labels:
+    app: messaging-app
+    version: green
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: messaging-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: messaging-app
+        version: green
+    spec:
+      containers:
+        - name: web
+          # update this image to a 'green' tag if you have one (e.g. messaging_app-web:green)
+          image: messaging_app-web:green
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MYSQL_HOST
+              value: "db"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: MYSQL_DB
+              value: "messaging"
+            - name: MYSQLUSER
+              value: "messaging_user"
+            - name: MYSQL_PASSWORD
+              value: "supersecretpassword"
+            - name: DJANGO_SECRET_KEY
+              value: "dev-secret"
