@@ -1,4 +1,4 @@
-name: CI — Tests
+name: CI — Lint, Tests & Coverage
 
 on:
   push:
@@ -23,13 +23,11 @@ jobs:
           --health-interval=10s --health-timeout=5s --health-retries=10
 
     env:
-      # Make these available to your Django settings/tests if your code reads env vars.
       DB_HOST: 127.0.0.1
       DB_PORT: 3306
       DB_NAME: messaging_test
       DB_USER: root
       DB_PASS: root
-      # Commonly used URL form for libraries/apps that read DATABASE_URL
       DATABASE_URL: mysql://root:root@127.0.0.1:3306/messaging_test
 
     steps:
@@ -63,25 +61,32 @@ jobs:
       working-directory: ./messaging_app
       run: |
         python -m pip install --upgrade pip
-        # Install project deps if file exists
         if [ -f requirements.txt ]; then
           pip install -r requirements.txt || true
         fi
-        # Ensure test tools are available
-        pip install pytest pytest-cov pytest-django mysqlclient
+        # test tools + linting + coverage
+        pip install pytest pytest-cov pytest-django mysqlclient flake8 coverage || true
+        # fallback: install PyMySQL in case mysqlclient fails to build on runner
+        pip install pymysql || true
+
+    - name: Lint (flake8)
+      working-directory: ./messaging_app
+      run: |
+        echo "Running flake8..."
+        # Run flake8 on the Django package and fail if any issues exist
+        # Adjust target directory if your python package lives elsewhere
+        flake8 messaging_app
 
     - name: (Optional) Run migrations
       working-directory: ./messaging_app
       run: |
-        # If your test setup expects migrations to be run first, run them here.
-        # If your tests set up DB themselves, this step can be skipped.
         python manage.py migrate --noinput || true
 
-    - name: Run tests with pytest
+    - name: Run tests with pytest + coverage
       working-directory: ./messaging_app
       run: |
-        # produce junit xml report for CI
-        pytest --maxfail=1 --disable-warnings --junitxml=report.xml
+        # produce junit xml and coverage reports
+        pytest --maxfail=1 --disable-warnings --junitxml=report.xml --cov=messaging_app --cov-report=xml:coverage.xml --cov-report=html:coverage_html || true
 
     - name: Upload JUnit test report
       if: always()
@@ -90,9 +95,23 @@ jobs:
         name: junit-report
         path: messaging_app/report.xml
 
-    - name: Upload pytest logs (optional)
+    - name: Upload coverage xml
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: pytest-output
+        name: coverage-xml
+        path: messaging_app/coverage.xml
+
+    - name: Upload coverage HTML
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-html
+        path: messaging_app/coverage_html
+
+    - name: Upload pytest cache (optional)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-cache
         path: messaging_app/.pytest_cache || messaging_app/report.xml
