@@ -1,0 +1,98 @@
+name: CI — Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: messaging_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      # Make these available to your Django settings/tests if your code reads env vars.
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: messaging_test
+      DB_USER: root
+      DB_PASS: root
+      # Commonly used URL form for libraries/apps that read DATABASE_URL
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/messaging_test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Cache pip
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/messaging_app/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Wait for MySQL to be ready
+      run: |
+        echo "Waiting for MySQL to be ready..."
+        for i in {1..60}; do
+          mysqladmin ping -h 127.0.0.1 -uroot -proot >/dev/null 2>&1 && break
+          echo "MySQL not ready yet ($i/60)..."
+          sleep 1
+        done
+        mysqladmin ping -h 127.0.0.1 -uroot -proot
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      working-directory: ./messaging_app
+      run: |
+        python -m pip install --upgrade pip
+        # Install project deps if file exists
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt || true
+        fi
+        # Ensure test tools are available
+        pip install pytest pytest-cov pytest-django mysqlclient
+
+    - name: (Optional) Run migrations
+      working-directory: ./messaging_app
+      run: |
+        # If your test setup expects migrations to be run first, run them here.
+        # If your tests set up DB themselves, this step can be skipped.
+        python manage.py migrate --noinput || true
+
+    - name: Run tests with pytest
+      working-directory: ./messaging_app
+      run: |
+        # produce junit xml report for CI
+        pytest --maxfail=1 --disable-warnings --junitxml=report.xml
+
+    - name: Upload JUnit test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: junit-report
+        path: messaging_app/report.xml
+
+    - name: Upload pytest logs (optional)
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-output
+        path: messaging_app/.pytest_cache || messaging_app/report.xml
